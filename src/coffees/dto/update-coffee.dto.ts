@@ -7,6 +7,6 @@ export class UpdateCoffeeDto {
     @IsString()
     readonly brand?: string
 
-    @IsString()
+    @IsString({ each: true })
     readonly flavours?: string[]
 }
