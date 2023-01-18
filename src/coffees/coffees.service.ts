@@ -9,10 +9,9 @@ import { Flavour } from './entities/flavour.entity';
 export class CoffeesService {
     constructor(
         @InjectRepository(Coffee)
-        @InjectRepository(Flavour)
-
         private readonly coffeeRepository: Repository<Coffee>,
-        private readonly flavourRepository: Repository<Coffee>
+        @InjectRepository(Flavour)
+        private readonly flavourRepository: Repository<Flavour>
     ){}
 
     findAll(){
@@ -32,16 +31,30 @@ export class CoffeesService {
         return coffee
     }
 
-    create(createCoffeeDto: CreateCoffeeDto) {
-        const coffee = this.coffeeRepository.create(createCoffeeDto)
+    async create(createCoffeeDto: CreateCoffeeDto) {
+        const flavours = await Promise.all(
+            createCoffeeDto.flavours.map(item => this.preloadFlavourByName(item))
+        )
+ 
+        const coffee = this.coffeeRepository.create({
+            ...createCoffeeDto,
+            flavours
+        })
+
         return this.coffeeRepository.save(coffee)
     }
 
     async update(id: string, updateCoffeeDto: any){
+        const flavours = await Promise.all(
+            updateCoffeeDto.flavours.map(item => this.preloadFlavourByName(item))
+        )
+    
         const coffee = await this.coffeeRepository.preload({
             id: +id,
-            ...updateCoffeeDto
+            ...updateCoffeeDto,
+            flavours
         })
+        
         if(!coffee) {
             throw new NotFoundException(`Coffee #${id} not found.`)
 
